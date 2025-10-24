@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Attendance Alert</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        .alert-box {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 5px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .alert-icon {
+            font-size: 48px;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        .alert-title {
+            color: #856404;
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        .alert-message {
+            background-color: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .details {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+    </style>
+</head>
+<body>
+    <div class="alert-box">
+        <div class="alert-icon">⚠️</div>
+        <div class="alert-title">Attendance Alert</div>
+
+        <div class="alert-message">
+            <p>Dear {{ employee_name }},</p>
+
+            {% if alert_type == 'late_arrival' %}
+                <p>This is to inform you that you arrived late to the office today.</p>
+            {% elif alert_type == 'early_departure' %}
+                <p>This is to inform you that you left the office early today.</p>
+            {% elif alert_type == 'missing_checkout' %}
+                <p>We noticed that you forgot to check out today. Please ensure you check out when leaving the office.</p>
+            {% elif alert_type == 'insufficient_hours' %}
+                <p>Your working hours today are below the required minimum. Please ensure you complete your full working hours.</p>
+            {% endif %}
+        </div>
+
+        {% if details %}
+        <div class="details">
+            <h4>Details:</h4>
+            {% for key, value in details.items() %}
+                <p><strong>{{ key.replace('_', ' ').title() }}:</strong> {{ value }}</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="alert-message">
+            <p>Please contact your manager or HR if you have any questions regarding your attendance.</p>
+            <p>Thank you for your attention to this matter.</p>
+            <p>Best regards,<br>{{ company_name }} HR Team</p>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>This is an automated message from the Attendance Tracking System.</p>
+        <p>Generated on: {{ datetime.now().strftime('%Y-%m-%d %H:%M:%S') }}</p>
+    </div>
+</body>
+</html>

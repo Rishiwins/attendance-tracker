@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>End of Day Report</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        .header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px;
+        }
+        .summary {
+            background-color: #ecf0f1;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+        .summary-item {
+            text-align: center;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+        }
+        .summary-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .summary-label {
+            font-size: 12px;
+            color: #7f8c8d;
+            text-transform: uppercase;
+        }
+        .section {
+            margin: 30px 0;
+        }
+        .section-title {
+            background-color: #34495e;
+            color: white;
+            padding: 10px 15px;
+            margin: 0 0 15px 0;
+            border-radius: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        .status-present { color: #27ae60; font-weight: bold; }
+        .status-absent { color: #e74c3c; font-weight: bold; }
+        .status-partial { color: #f39c12; font-weight: bold; }
+        .late { color: #e74c3c; }
+        .highlight-row {
+            background-color: #fff3cd;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>{{ company_name }}</h1>
+        <h2>End of Day Attendance Report</h2>
+        <p>{{ report_date.strftime('%A, %B %d, %Y') }}</p>
+        <p>Manager: {{ manager_email }}</p>
+    </div>
+
+    <div class="summary">
+        <div class="summary-grid">
+            <div class="summary-item">
+                <div class="summary-number">{{ total_employees }}</div>
+                <div class="summary-label">Total Team</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-number" style="color: #27ae60;">{{ present_count }}</div>
+                <div class="summary-label">Present</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-number" style="color: #e74c3c;">{{ absent_count }}</div>
+                <div class="summary-label">Absent</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-number" style="color: #e67e22;">{{ late_count }}</div>
+                <div class="summary-label">Late Today</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h3 class="section-title">Today's Attendance Summary</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Employee</th>
+                    <th>Check-in</th>
+                    <th>Check-out</th>
+                    <th>Hours</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for employee in employee_attendance %}
+                <tr {% if employee.is_late %}class="highlight-row"{% endif %}>
+                    <td>
+                        {{ employee.employee_name }}
+                        {% if employee.is_late %}
+                            <span class="late">(Late)</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if employee.check_in_time %}
+                            {{ employee.check_in_time.strftime('%I:%M %p') }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if employee.check_out_time %}
+                            {{ employee.check_out_time.strftime('%I:%M %p') }}
+                        {% else %}
+                            <span style="color: #f39c12;">Still in office</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ "%.1f"|format(employee.total_hours) }}</td>
+                    <td class="status-{{ employee.status }}">{{ employee.status.title() }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if absent_employees %}
+    <div class="section">
+        <h3 class="section-title">Absent Today ({{ absent_count }})</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Employee Name</th>
+                    <th>Department</th>
+                    <th>Last Seen</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for employee in absent_employees %}
+                <tr>
+                    <td>{{ employee.employee_name }}</td>
+                    <td>{{ employee.department }}</td>
+                    <td>-</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    {% if late_employees %}
+    <div class="section">
+        <h3 class="section-title">Late Arrivals Today ({{ late_count }})</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Employee Name</th>
+                    <th>Check-in Time</th>
+                    <th>Minutes Late</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for employee in late_employees %}
+                <tr>
+                    <td>{{ employee.employee_name }}</td>
+                    <td>{{ employee.check_in_time.strftime('%I:%M %p') if employee.check_in_time else '-' }}</td>
+                    <td>
+                        {% if employee.check_in_time %}
+                            {% set late_minutes = ((employee.check_in_time.hour * 60 + employee.check_in_time.minute) - 540) %}
+                            {% if late_minutes > 0 %}{{ late_minutes }}{% else %}0{% endif %}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <div class="footer">
+        <p><strong>Key Points for Tomorrow:</strong></p>
+        <ul>
+            {% if absent_count > 0 %}
+            <li>Follow up with absent team members</li>
+            {% endif %}
+            {% if late_count > 0 %}
+            <li>Address punctuality with late arrivals</li>
+            {% endif %}
+            <li>Review any pending tasks or projects</li>
+        </ul>
+        <p>This report was generated automatically by the Attendance Tracking System.</p>
+        <p>Report generated on: {{ datetime.now().strftime('%Y-%m-%d %H:%M:%S') }}</p>
+    </div>
+</body>
+</html>

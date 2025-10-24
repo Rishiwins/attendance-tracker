@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>System Alert</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        .alert-container {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 5px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .alert-header {
+            color: #721c24;
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        .alert-icon {
+            font-size: 48px;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        .alert-content {
+            background-color: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .details-section {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .details-title {
+            font-weight: bold;
+            color: #495057;
+            margin-bottom: 10px;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+        .timestamp {
+            background-color: #e9ecef;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: monospace;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="alert-container">
+        <div class="alert-icon">🚨</div>
+        <div class="alert-header">System Alert: {{ alert_type }}</div>
+
+        <div class="alert-content">
+            <h3>Alert Message:</h3>
+            <p>{{ message }}</p>
+
+            <div class="timestamp">
+                <strong>Timestamp:</strong> {{ timestamp.strftime('%Y-%m-%d %H:%M:%S UTC') }}
+            </div>
+        </div>
+
+        {% if details %}
+        <div class="details-section">
+            <div class="details-title">Additional Details:</div>
+            {% for key, value in details.items() %}
+                <p><strong>{{ key.replace('_', ' ').title() }}:</strong> {{ value }}</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="alert-content">
+            <h4>Recommended Actions:</h4>
+            <ul>
+                <li>Check system logs for more detailed information</li>
+                <li>Verify system components are functioning properly</li>
+                <li>Contact technical support if the issue persists</li>
+                {% if alert_type == 'Camera Offline' %}
+                <li>Check camera connections and network status</li>
+                <li>Restart camera services if necessary</li>
+                {% elif alert_type == 'Database Connection Error' %}
+                <li>Verify database server status</li>
+                <li>Check network connectivity to database</li>
+                {% elif alert_type == 'Face Recognition Error' %}
+                <li>Check face recognition service status</li>
+                <li>Verify face encoding files are accessible</li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p><strong>{{ company_name }} - Attendance Tracking System</strong></p>
+        <p>This is an automated alert from the system monitoring service.</p>
+        <p>Please do not reply to this email. For support, contact your system administrator.</p>
+    </div>
+</body>
+</html>
