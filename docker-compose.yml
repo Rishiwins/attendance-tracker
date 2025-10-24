@@ -34,13 +34,18 @@ services:
       - SMTP_USERNAME=${SMTP_USERNAME}
       - SMTP_PASSWORD=${SMTP_PASSWORD}
       - FROM_EMAIL=${FROM_EMAIL}
-      - CAMERA_URLS=${CAMERA_URLS:-http://localhost:8080/video}
+      - CAMERA_URLS=${CAMERA_URLS:-0}
       - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@company.com}
       - MANAGER_EMAIL=${MANAGER_EMAIL:-manager@company.com}
       - ENVIRONMENT=production
+      - FACE_RECOGNITION_TOLERANCE=0.6
+      - FACE_DETECTION_MODEL=hog
     volumes:
       - ./data:/app/data
       - ./logs:/app/logs
+    devices:
+      - /dev/video0:/dev/video0  # For webcam access
+    privileged: true  # Required for camera access in Docker
     depends_on:
       - postgres
       - redis

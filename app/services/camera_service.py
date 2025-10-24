@@ -33,14 +33,29 @@ class CameraStream:
             return
 
         try:
-            self.cap = cv2.VideoCapture(self.url)
+            # Handle different camera URL types
+            if self.url.isdigit():
+                # Webcam index (0, 1, 2, etc.)
+                self.cap = cv2.VideoCapture(int(self.url))
+            elif self.url.startswith(('http://', 'https://', 'rtsp://')):
+                # IP camera or network stream
+                self.cap = cv2.VideoCapture(self.url)
+            else:
+                # File path or other format
+                self.cap = cv2.VideoCapture(self.url)
 
             if not self.cap.isOpened():
                 logger.error(f"Failed to open camera {self.camera_id} at {self.url}")
                 return False
 
+            # Set camera properties
             self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
             self.cap.set(cv2.CAP_PROP_FPS, 30)
+
+            # For webcams, set resolution
+            if self.url.isdigit():
+                self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+                self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
             self.is_running = True
             self.thread = threading.Thread(target=self._capture_loop, daemon=True)

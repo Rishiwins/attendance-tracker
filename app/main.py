@@ -6,20 +6,35 @@ from datetime import datetime
 
 from app.database import engine, Base
 from app.api import employees, attendance, cameras
-from app.services.camera_service import CameraManager
-from app.services.face_recognition_service import FaceRecognitionService
 from app.services.attendance_service import AttendanceService
 from app.services.email_service import EmailService
 from app.config import settings
 
+# Set up logging first
 logging.basicConfig(
     level=getattr(logging, settings.LOG_LEVEL),
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
 
+# Try to import OpenCV dependencies, fall back to lite mode if not available
+try:
+    import cv2
+    import face_recognition
+    from app.services.camera_service import CameraManager
+    from app.services.face_recognition_service import FaceRecognitionService
+    FULL_MODE = True
+    print("OpenCV and face_recognition detected - running in FULL MODE")
+except ImportError as e:
+    from app.services.face_recognition_service_lite import FaceRecognitionService
+    FULL_MODE = False
+    print(f"OpenCV/face_recognition not available ({e}) - running in LITE MODE")
+
 face_service = FaceRecognitionService()
-camera_manager = CameraManager(face_service)
+if FULL_MODE:
+    camera_manager = CameraManager(face_service)
+else:
+    camera_manager = None
 attendance_service = AttendanceService()
 email_service = EmailService()
 
@@ -39,16 +54,19 @@ async def lifespan(app: FastAPI):
         finally:
             db.close()
 
-    camera_manager.add_detection_callback(on_face_detected)
-
-    camera_manager.start_all_cameras()
+    if FULL_MODE and camera_manager:
+        camera_manager.add_detection_callback(on_face_detected)
+        camera_manager.start_all_cameras()
+    else:
+        logger.info("Camera functionality disabled - running in lite mode")
 
     logger.info("System started successfully")
 
     yield
 
     logger.info("Shutting down system...")
-    camera_manager.stop_all_cameras()
+    if FULL_MODE and camera_manager:
+        camera_manager.stop_all_cameras()
     logger.info("System shutdown complete")
 
 app = FastAPI(

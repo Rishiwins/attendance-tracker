@@ -2,20 +2,29 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from typing import List
-import cv2
-import io
-from PIL import Image
 
 from app.database import get_db
 from app.models import Camera
 from app.schemas import Camera as CameraSchema, CameraCreate
-from app.services.camera_service import CameraManager
-from app.services.face_recognition_service import FaceRecognitionService
+
+# Try to import OpenCV dependencies, fall back to lite mode if not available
+try:
+    import cv2
+    import io
+    from PIL import Image
+    from app.services.camera_service import CameraManager
+    from app.services.face_recognition_service import FaceRecognitionService
+
+    face_service = FaceRecognitionService()
+    camera_manager = CameraManager(face_service)
+    CAMERA_SUPPORT = True
+except ImportError:
+    from app.services.face_recognition_service_lite import FaceRecognitionService
+    face_service = FaceRecognitionService()
+    camera_manager = None
+    CAMERA_SUPPORT = False
 
 router = APIRouter(prefix="/cameras", tags=["cameras"])
-
-face_service = FaceRecognitionService()
-camera_manager = CameraManager(face_service)
 
 @router.post("/", response_model=CameraSchema)
 def create_camera(
@@ -23,6 +32,9 @@ def create_camera(
     db: Session = Depends(get_db)
 ):
     """Create a new camera"""
+    if not CAMERA_SUPPORT:
+        raise HTTPException(status_code=501, detail="Camera functionality not available - running in lite mode")
+
     db_camera = db.query(Camera).filter(Camera.url == camera.url).first()
     if db_camera:
         raise HTTPException(status_code=400, detail="Camera URL already exists")
